@@ -16,8 +16,9 @@ class Program
         // Exemple de dictionnaire d'entrée
         var templatesFromDict = new Dictionary<string, string>
         {
-            { "meteojob3", "AAGGG-JKJHD-KJHDJKH-456" },
-            { "log", "console.log('$END$');" }
+            // { "meteojob3", "AAGGG-JKJHD-KJHDJKH-456" },
+            // { "log", "console.log('$END$');" }
+            { "titi", "console.log('titi');" }
         };
 
         templates.AddRange(templatesFromDict);
@@ -36,10 +37,13 @@ class Program
         using (var reader = new StreamReader(csvFilePath))
         using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
                {
+                   Delimiter = ";", // Définir le séparateur comme point-virgule
                    HeaderValidated = null,
                    MissingFieldFound = null
                }))
         {
+            csv.Read();
+            csv.ReadHeader();
             while (csv.Read())
             {
                 var name = csv.GetField<string>("name");
@@ -50,6 +54,7 @@ class Program
 
         return templates;
     }
+
 
 
     static void AddTemplatesToExistingFile(Dictionary<string, string> templates, string filePath)
