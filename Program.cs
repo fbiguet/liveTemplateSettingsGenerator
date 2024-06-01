@@ -1,18 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
+using CsvHelper;
+using CsvHelper.Configuration;
 
 class Program
 {
     static void Main(string[] args)
     {
+        string csvFilePath = @"D:\dev\templates.csv";
+        var templates = ReadTemplatesFromCsv(csvFilePath);
+        
         // Exemple de dictionnaire d'entrée
-        var templates = new Dictionary<string, string>
+        var templatesFromDict = new Dictionary<string, string>
         {
             { "meteojob3", "AAGGG-JKJHD-KJHDJKH-456" },
             { "log", "console.log('$END$');" }
         };
+
+        templates.AddRange(templatesFromDict);
 
         // Chemin du fichier existant
         string filePath = @"C:\Users\Fabien\AppData\Roaming\JetBrains\Rider2023.3\resharper-host\GlobalSettingsStorage.DotSettings";
@@ -20,6 +28,29 @@ class Program
         // Ajouter les nouveaux templates au fichier existant
         AddTemplatesToExistingFile(templates, filePath);
     }
+    
+    static Dictionary<string, string> ReadTemplatesFromCsv(string csvFilePath)
+    {
+        var templates = new Dictionary<string, string>();
+
+        using (var reader = new StreamReader(csvFilePath))
+        using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+               {
+                   HeaderValidated = null,
+                   MissingFieldFound = null
+               }))
+        {
+            while (csv.Read())
+            {
+                var name = csv.GetField<string>("name");
+                var template = csv.GetField<string>("template");
+                templates.Add(name, template);
+            }
+        }
+
+        return templates;
+    }
+
 
     static void AddTemplatesToExistingFile(Dictionary<string, string> templates, string filePath)
     {
@@ -97,5 +128,21 @@ class Program
         // Sauvegarder le fichier XML mis à jour
         document.Save(filePath);
         Console.WriteLine($"Le fichier {filePath} a été mis à jour avec succès.");
+    }
+}
+
+public static class DictionaryExtensions
+{
+    public static void AddRange<TKey, TValue>(this IDictionary<TKey, TValue> target, IDictionary<TKey, TValue> source)
+    {
+        if (target == null)
+            throw new ArgumentNullException(nameof(target));
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+
+        foreach (var kvp in source)
+        {
+            target[kvp.Key] = kvp.Value;
+        }
     }
 }
